@@ -1,0 +1,31 @@
+{
+  "name": "koa-some",
+  "version": "0.0.1",
+  "description": "Koa `some` middleware",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test.js --recursive --exit --bail --timeout 10000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uNmAnNeR/koa-some.git"
+  },
+  "keywords": [
+    "koa",
+    "middleware",
+    "some"
+  ],
+  "author": "Alexey Kryazhev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/uNmAnNeR/koa-some/issues"
+  },
+  "homepage": "https://github.com/uNmAnNeR/koa-some#readme",
+  "devDependencies": {
+    "mocha": "^6.0.0",
+    "sinon": "^7.2.4"
+  },
+  "dependencies": {
+    "clone": "^2.1.2"
+  }
+}
