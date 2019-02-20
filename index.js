@@ -2,6 +2,8 @@ const clone = require('clone');
 
 
 function cloneObject (obj) {
+  if (!obj) return;
+
   return Object
     .keys(obj)
     .reduce((copy, k) => {
