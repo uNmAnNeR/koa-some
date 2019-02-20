@@ -6,10 +6,12 @@
 
 Weird `some` middleware
 
+**NOTE:** Implements shallow copying of koa `ctx.response` which is not supported out of the koa box and done 'as is'. Acceptable only for simple scenarios.
+
 ## Install
 
 ```js
-$ npm install koa-some
+npm install koa-some
 ```
 
 ## Use
