@@ -1,19 +1,25 @@
 const clone = require('clone');
 
 
-const cloneKeys = ['request', 'response', 'state'];
+function cloneObject (obj) {
+  return Object
+    .keys(obj)
+    .reduce((copy, k) => {
+      copy[k] = obj[k];
+      return copy;
+    }, {});
+}
+
 function cloneContext (ctx) {
-  return cloneKeys.reduce((copy, k) => {
-    if (ctx[k]) copy[k] = clone(ctx[k]);
-    return copy;
-  }, {});
+  return {
+    response: cloneObject(ctx.response),  // `clone` is not working for koa
+    state: clone(ctx.state) || ctx.state,
+  };
 }
 
 function assignContext (ctx, copy) {
-  Object.keys(copy).forEach(k => {
-    if (ctx[k]) Object.assign(ctx[k], copy[k]);
-    else ctx[k] = copy[k];
-  })
+  if (ctx.response) Object.assign(ctx.response, copy.response);
+  ctx.state = copy.state;
 }
 
 
@@ -41,20 +47,16 @@ function some (middleware) {
     // HACK: explicitly set to false to include in state
     if (ctx.response && ctx.response._explicitStatus == null) ctx.response._explicitStatus = false;
 
+    // to handle only first successfull case
+    let resolved = false;
+    let initState = cloneContext(ctx);
+    const wrapResolve = (...args) => {
+      resolved = true;
+      // save first success next
+      if (next) next = next.bind(null, ...args);
+    };
+
     return new Promise(async (resolve, reject) => {
-      // to handle only first successfull case
-      let resolved = false;
-      let state = cloneContext(ctx);
-      const wrapResolve = (...args) => {
-        if (resolved) return;
-
-        resolved = true;
-        // save first success state
-        state = cloneContext(ctx);
-        // save first success next
-        if (next) next = next.bind(null, ...args);
-      };
-
       let error;
       let errorState;
       let hasError = false;
@@ -62,19 +64,21 @@ function some (middleware) {
       for (let i=0; i < middleware.length; ++i) {
         try {
           await middleware[i](ctx, wrapResolve);
-          // restore state after error
-          assignContext(ctx, state);
+          if (resolved) break;
         } catch (e) {
-          if (resolved || hasError) break;
-          error = e;
-          hasError = true;
-          errorState = cloneContext(ctx);
+          if (!hasError) {
+            error = e;
+            hasError = true;
+          }
         }
+
+        if (!errorState) errorState = cloneContext(ctx);
+        // restore state after error
+        assignContext(ctx, initState);
       }
 
       if (resolved) return resolve(next && next());
-
-      assignContext(ctx, errorState);
+      if (errorState) assignContext(ctx, errorState);
       if (hasError) return reject(error);
 
       resolve();

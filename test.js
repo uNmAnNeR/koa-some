@@ -59,6 +59,19 @@ describe('Koa Some', function () {
 
     await koaSome(middleware)({});
 
-    assert(ctx.state === 1, 'Context state is not ');
+    assert(ctx.state === 1, 'Context state is not restored');
+  });
+
+  it('should keep first error context', async function () {
+    const middleware = Array.from({ length: 5 }, (_, i) =>
+      async (ctx, next) => ctx.state = i
+    );
+
+    const ctx = {};
+    const nextcb = spy();
+    await koaSome(middleware)(ctx, nextcb);
+
+    assert(!nextcb.called, 'Next is called on Error');
+    assert(ctx.state === 0, 'Next is called on Error');
   });
 });
